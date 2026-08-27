@@ -71,9 +71,11 @@ npm run db:migrate
 ```
 
 O parâmetro `?schema=...` não é usado pelo driver. Senhas com `@` ou outros
-caracteres reservados precisam ser codificadas na URL. Em produção, utilize no
-mínimo `DATABASE_SSL_MODE=require`; o modo recomendado é `verify-full` com
-`DATABASE_CA_CERT`.
+caracteres reservados precisam ser codificadas na URL. Para reproduzir o JDBC
+informado, use `DATABASE_SSL_MODE=prefer`: a aplicação tenta TLS primeiro e
+aceita uma conexão sem criptografia apenas quando o servidor declara não
+oferecer SSL. Quando o servidor estiver configurado para exigir TLS, prefira
+`require` ou `verify-full` com `DATABASE_CA_CERT`.
 
 ## Testes
 
@@ -117,7 +119,7 @@ Resultados ambíguos nunca serão publicados automaticamente.
 ## Segurança
 
 - segredos permanecem apenas em variáveis de ambiente;
-- a conexão PostgreSQL de produção exige TLS;
+- a conexão PostgreSQL suporta `prefer`, `require` e `verify-full`;
 - senhas serão armazenadas com Argon2id;
 - sessões guardarão somente o hash do token;
 - URLs de importação utilizam uma lista de domínios oficiais;

@@ -1,15 +1,6 @@
-import { Client } from "pg";
+import { connectDatabase } from "../lib/postgres-connect.mjs";
 
-import { parseDatabaseConfig } from "../lib/postgres-config.mjs";
-
-const config = parseDatabaseConfig();
-const client = new Client({
-  connectionString: config.connectionString,
-  connectionTimeoutMillis: 7_000,
-  ssl: config.ssl,
-});
-
-await client.connect();
+const { client, config } = await connectDatabase();
 try {
   await client.query(`SET search_path TO "${config.schema}", public`);
   const result = await client.query(

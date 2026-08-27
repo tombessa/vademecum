@@ -103,9 +103,14 @@ conexão exclusivamente por variáveis de ambiente:
 
 - `DATABASE_URL`: conexão sem o parâmetro `schema`;
 - `DATABASE_SCHEMA`: `vademecum`;
-- `DATABASE_SSL_MODE`: `require` ou, preferencialmente, `verify-full`;
+- `DATABASE_SSL_MODE`: `prefer` no servidor atual; `require` ou `verify-full`
+  quando o TLS for obrigatório;
 - `DATABASE_CA_CERT`: certificado da autoridade, obrigatório em `verify-full`.
 
 Senhas com caracteres reservados devem ser codificadas na URL. O schema é
 configurado explicitamente em cada conexão, sem depender de parâmetros
 específicos de ORM.
+
+No modo `prefer`, a aplicação tenta TLS primeiro e só repete sem criptografia
+quando o servidor declara que não oferece SSL, reproduzindo a semântica do
+driver JDBC.

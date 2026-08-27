@@ -72,7 +72,7 @@ test("normaliza a URL PostgreSQL e separa o schema", () => {
   const config = parseDatabaseConfig({
     DATABASE_URL: "postgresql://app:pa@ss@db.example:5432/app?schema=vademecum",
     DATABASE_SCHEMA: "vademecum",
-    DATABASE_SSL_MODE: "require",
+    DATABASE_SSL_MODE: "prefer",
   });
 
   assert.equal(
@@ -80,5 +80,6 @@ test("normaliza a URL PostgreSQL e separa o schema", () => {
     "postgresql://app:pa%40ss@db.example:5432/app",
   );
   assert.equal(config.schema, "vademecum");
+  assert.equal(config.sslMode, "prefer");
   assert.deepEqual(config.ssl, { rejectUnauthorized: false });
 });

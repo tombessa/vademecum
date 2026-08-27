@@ -3,6 +3,7 @@ export type DatabaseEnvironment = Record<string, string | undefined>;
 export type DatabaseConfig = {
   connectionString: string;
   schema: string;
+  sslMode: "disable" | "prefer" | "require" | "verify-full";
   ssl: false | { rejectUnauthorized: boolean; ca?: string };
 };
 
