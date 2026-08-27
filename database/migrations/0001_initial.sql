@@ -6,8 +6,11 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS ltree;
 
-CREATE TEXT SEARCH CONFIGURATION public.portuguese_unaccent (COPY = pg_catalog.portuguese);
-ALTER TEXT SEARCH CONFIGURATION public.portuguese_unaccent
+CREATE SCHEMA IF NOT EXISTS vademecum AUTHORIZATION CURRENT_USER;
+SET LOCAL search_path TO vademecum, public;
+
+CREATE TEXT SEARCH CONFIGURATION vademecum.portuguese_unaccent (COPY = pg_catalog.portuguese);
+ALTER TEXT SEARCH CONFIGURATION vademecum.portuguese_unaccent
   ALTER MAPPING FOR hword, hword_part, word
   WITH unaccent, portuguese_stem;
 
@@ -51,12 +54,17 @@ CREATE TABLE app_user (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email citext NOT NULL UNIQUE,
   display_name text NOT NULL,
-  password_hash text NOT NULL,
+  password_hash text,
+  auth_provider text NOT NULL DEFAULT 'LOCAL'
+    CHECK (auth_provider IN ('LOCAL', 'CHATGPT')),
+  external_subject text,
   role user_role NOT NULL DEFAULT 'USER',
   status user_status NOT NULL DEFAULT 'INVITED',
   last_login_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (auth_provider, external_subject),
+  CHECK (auth_provider <> 'LOCAL' OR password_hash IS NOT NULL)
 );
 
 CREATE TABLE user_session (
@@ -163,7 +171,7 @@ CREATE TABLE legal_unit (
   source_bounding_box jsonb,
   search_vector tsvector GENERATED ALWAYS AS (
     to_tsvector(
-      'public.portuguese_unaccent'::regconfig,
+      'vademecum.portuguese_unaccent'::regconfig,
       coalesce(label, '') || ' ' || coalesce(heading, '') || ' ' || coalesce(body, '')
     )
   ) STORED,
@@ -215,7 +223,7 @@ CREATE TABLE jurisprudence_decision (
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   search_vector tsvector GENERATED ALWAYS AS (
     to_tsvector(
-      'public.portuguese_unaccent'::regconfig,
+      'vademecum.portuguese_unaccent'::regconfig,
       court || ' ' || coalesce(process_number, '') || ' ' || title || ' ' || coalesce(holding, '') || ' ' || coalesce(full_text, '')
     )
   ) STORED,

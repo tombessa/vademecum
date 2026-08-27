@@ -1,3 +1,5 @@
+import { getChatGPTUser } from "@/app/chatgpt-auth";
+import { withDatabaseClient } from "@/lib/postgres";
 import {
   assertOfficialPlanaltoUrl,
   buildReflegisQuery,
@@ -5,6 +7,11 @@ import {
 } from "@/lib/planalto-reference.mjs";
 
 export async function POST(request: Request) {
+  const authenticatedUser = await getChatGPTUser();
+  if (!authenticatedUser) {
+    return Response.json({ error: "Autenticação necessária." }, { status: 401 });
+  }
+
   let payload: { reference?: unknown; sourceUrl?: unknown };
   try {
     payload = await request.json();
@@ -39,14 +46,70 @@ export async function POST(request: Request) {
     }
   }
 
-  return Response.json(
-    {
-      status: "LOCATING",
-      reference,
-      planaltoQuery: buildReflegisQuery(reference),
-      sourceUrl,
-      persisted: false,
-    },
-    { status: 202 },
-  );
+  try {
+    const result = await withDatabaseClient(async (client) => {
+      await client.query("BEGIN");
+      try {
+        const userResult = await client.query<{ id: string; role: string }>(
+          `INSERT INTO app_user (
+             email, display_name, auth_provider, external_subject, status
+           ) VALUES ($1, $2, 'CHATGPT', $1, 'ACTIVE')
+           ON CONFLICT (email) DO UPDATE
+             SET display_name = EXCLUDED.display_name,
+                 auth_provider = 'CHATGPT',
+                 external_subject = EXCLUDED.external_subject,
+                 status = 'ACTIVE'
+           RETURNING id, role::text`,
+          [authenticatedUser.email, authenticatedUser.displayName],
+        );
+        const user = userResult.rows[0];
+        if (!user) throw new Error("Usuário não persistido.");
+
+        await client.query(
+          `SELECT set_config('app.current_user_id', $1, true),
+                  set_config('app.current_user_role', $2, true)`,
+          [user.id, user.role],
+        );
+
+        const importResult = await client.query<{ id: string; status: string }>(
+          `INSERT INTO legislation_import_request (
+             requested_by, raw_query, requested_act_type, requested_act_number,
+             requested_act_year, provided_source_url, status
+           ) VALUES ($1, $2, $3, $4, $5, $6, 'LOCATING')
+           RETURNING id, status::text`,
+          [
+            user.id,
+            payload.reference.trim(),
+            reference.actType,
+            reference.actNumber,
+            reference.actYear,
+            sourceUrl,
+          ],
+        );
+
+        await client.query("COMMIT");
+        return importResult.rows[0];
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    });
+
+    return Response.json(
+      {
+        id: result?.id,
+        status: result?.status ?? "LOCATING",
+        reference,
+        planaltoQuery: buildReflegisQuery(reference),
+        sourceUrl,
+        persisted: true,
+      },
+      { status: 202 },
+    );
+  } catch {
+    return Response.json(
+      { error: "Banco de dados indisponível. Tente novamente em instantes." },
+      { status: 503 },
+    );
+  }
 }

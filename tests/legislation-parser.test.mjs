@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { normalizeLegalText, parseLegalText } from "../lib/legislation-parser.mjs";
 import { assertOfficialPlanaltoUrl, buildReflegisQuery, parseActReference } from "../lib/planalto-reference.mjs";
+import { parseDatabaseConfig } from "../lib/postgres-config.mjs";
 
 test("normaliza ordinais e palavras hifenizadas", () => {
   const input = "Art. 1o A adminis-\ntração observará a lei.\n§ 1o Regra.";
@@ -65,4 +66,19 @@ test("aceita apenas fonte HTTPS oficial do Planalto", () => {
   assert.equal(assertOfficialPlanaltoUrl("https://www.planalto.gov.br/ccivil_03/leis/l8429.htm").hostname, "www.planalto.gov.br");
   assert.throws(() => assertOfficialPlanaltoUrl("http://www.planalto.gov.br/lei"), /HTTPS/);
   assert.throws(() => assertOfficialPlanaltoUrl("https://example.com/lei"), /domínio permitido/);
+});
+
+test("normaliza a URL PostgreSQL e separa o schema", () => {
+  const config = parseDatabaseConfig({
+    DATABASE_URL: "postgresql://app:pa@ss@db.example:5432/app?schema=vademecum",
+    DATABASE_SCHEMA: "vademecum",
+    DATABASE_SSL_MODE: "require",
+  });
+
+  assert.equal(
+    config.connectionString,
+    "postgresql://app:pa%40ss@db.example:5432/app",
+  );
+  assert.equal(config.schema, "vademecum");
+  assert.deepEqual(config.ssl, { rejectUnauthorized: false });
 });

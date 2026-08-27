@@ -10,7 +10,7 @@ Esta entrega contém:
 - busca local nos dispositivos de demonstração;
 - destaques coloridos interativos;
 - painel de remissões, jurisprudência e notas;
-- formulário de solicitação de inclusão de legislação;
+- formulário autenticado de solicitação de inclusão de legislação;
 - modelo PostgreSQL para conteúdo global e dados pessoais;
 - Row-Level Security para as tabelas pertencentes ao usuário;
 - manifesto dos 28 atos do Vade Mecum do Senado, 2ª edição;
@@ -20,7 +20,9 @@ Esta entrega contém:
 - validação de URLs oficiais do Planalto;
 - testes unitários e integração contínua.
 
-A interface publicada nesta fase usa dados demonstrativos. Persistência, login por senha e consulta efetiva à REFLEGIS serão conectados nos próximos marcos.
+A interface de leitura ainda usa dispositivos demonstrativos. Os pedidos de
+inclusão já possuem integração PostgreSQL e são vinculados ao usuário
+autenticado; a consulta efetiva à REFLEGIS será conectada no próximo marco.
 
 ## Arquitetura planejada
 
@@ -59,6 +61,19 @@ npm run dev
 ```
 
 O PostgreSQL executará automaticamente `database/migrations/0001_initial.sql` na primeira criação do volume.
+
+Para usar um PostgreSQL existente, configure `DATABASE_URL`,
+`DATABASE_SCHEMA=vademecum` e o modo TLS. Depois valide e aplique a migração:
+
+```bash
+npm run db:check
+npm run db:migrate
+```
+
+O parâmetro `?schema=...` não é usado pelo driver. Senhas com `@` ou outros
+caracteres reservados precisam ser codificadas na URL. Em produção, utilize no
+mínimo `DATABASE_SSL_MODE=require`; o modo recomendado é `verify-full` com
+`DATABASE_CA_CERT`.
 
 ## Testes
 
@@ -102,6 +117,7 @@ Resultados ambíguos nunca serão publicados automaticamente.
 ## Segurança
 
 - segredos permanecem apenas em variáveis de ambiente;
+- a conexão PostgreSQL de produção exige TLS;
 - senhas serão armazenadas com Argon2id;
 - sessões guardarão somente o hash do token;
 - URLs de importação utilizam uma lista de domínios oficiais;

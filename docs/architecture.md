@@ -95,3 +95,17 @@ SET LOCAL app.current_user_role = 'USER';
 ```
 
 As políticas RLS usam esses valores. Em ambiente com pool, `SET LOCAL` deve ocorrer dentro da mesma transação das consultas protegidas.
+
+## PostgreSQL externo
+
+O corpus e os dados pessoais ficam no schema `vademecum`. A aplicação recebe a
+conexão exclusivamente por variáveis de ambiente:
+
+- `DATABASE_URL`: conexão sem o parâmetro `schema`;
+- `DATABASE_SCHEMA`: `vademecum`;
+- `DATABASE_SSL_MODE`: `require` ou, preferencialmente, `verify-full`;
+- `DATABASE_CA_CERT`: certificado da autoridade, obrigatório em `verify-full`.
+
+Senhas com caracteres reservados devem ser codificadas na URL. O schema é
+configurado explicitamente em cada conexão, sem depender de parâmetros
+específicos de ORM.
