@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: vademecum-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vademecum}
+      POSTGRES_USER: ${POSTGRES_USER:-vademecum}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vademecum_local}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - vademecum_postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vademecum} -d ${POSTGRES_DB:-vademecum}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  vademecum_postgres_data:

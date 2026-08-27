@@ -1,0 +1,40 @@
+{
+  "source": {
+    "title": "Vade Mecum Senado Federal",
+    "edition": "2ª edição",
+    "referenceDate": "2025-06-30",
+    "pdfPages": 801,
+    "sha256": "c60ff07e4befc52b869a3a49a035ad88b36c1be95732e3231ab61f81c687b7cd",
+    "fileIncludedInRepository": false
+  },
+  "documents": [
+    { "position": 1, "section": "Constituição Federal", "code": "BR/CF/1988", "title": "Constituição da República Federativa do Brasil", "actType": "CONSTITUICAO", "actNumber": "1988", "actYear": 1988, "fromPage": 12, "toPage": 76 },
+    { "position": 2, "section": "Constituição Federal", "code": "BR/ADCT/1988", "title": "Ato das Disposições Constitucionais Transitórias", "actType": "ADCT", "actNumber": "1988", "actYear": 1988, "fromPage": 77, "toPage": 98 },
+    { "position": 3, "section": "Lei de Introdução às Normas do Direito Brasileiro", "code": "BR/DEL/4657/1942", "title": "Lei de Introdução às Normas do Direito Brasileiro", "actType": "DECRETO_LEI", "actNumber": "4657", "actYear": 1942, "fromPage": 100, "toPage": 102 },
+    { "position": 4, "section": "Código Civil", "code": "BR/LEI/10406/2002", "title": "Código Civil", "actType": "LEI", "actNumber": "10406", "actYear": 2002, "fromPage": 108, "toPage": 214 },
+    { "position": 5, "section": "Código de Processo Civil", "code": "BR/LEI/13105/2015", "title": "Código de Processo Civil", "actType": "LEI", "actNumber": "13105", "actYear": 2015, "fromPage": 219, "toPage": 312 },
+    { "position": 6, "section": "Código Penal e Lei das Contravenções Penais", "code": "BR/DEL/3914/1941", "title": "Lei de Introdução ao Código Penal e à Lei das Contravenções Penais", "actType": "DECRETO_LEI", "actNumber": "3914", "actYear": 1941, "fromPage": 314, "toPage": 315 },
+    { "position": 7, "section": "Código Penal e Lei das Contravenções Penais", "code": "BR/DEL/2848/1940", "title": "Código Penal", "actType": "DECRETO_LEI", "actNumber": "2848", "actYear": 1940, "fromPage": 317, "toPage": 355 },
+    { "position": 8, "section": "Código Penal e Lei das Contravenções Penais", "code": "BR/DEL/3688/1941", "title": "Lei das Contravenções Penais", "actType": "DECRETO_LEI", "actNumber": "3688", "actYear": 1941, "fromPage": 356, "toPage": 360 },
+    { "position": 9, "section": "Código de Processo Penal", "code": "BR/DEL/3931/1941", "title": "Lei de Introdução ao Código de Processo Penal", "actType": "DECRETO_LEI", "actNumber": "3931", "actYear": 1941, "fromPage": 362, "toPage": 363 },
+    { "position": 10, "section": "Código de Processo Penal", "code": "BR/DEL/3689/1941", "title": "Código de Processo Penal", "actType": "DECRETO_LEI", "actNumber": "3689", "actYear": 1941, "fromPage": 366, "toPage": 422 },
+    { "position": 11, "section": "Código Tributário Nacional", "code": "BR/LEI/5172/1966", "title": "Código Tributário Nacional", "actType": "LEI", "actNumber": "5172", "actYear": 1966, "fromPage": 425, "toPage": 442 },
+    { "position": 12, "section": "Código de Defesa do Consumidor", "code": "BR/LEI/8078/1990", "title": "Código de Defesa do Consumidor", "actType": "LEI", "actNumber": "8078", "actYear": 1990, "fromPage": 445, "toPage": 458 },
+    { "position": 13, "section": "Código Eleitoral", "code": "BR/LEI/4737/1965", "title": "Código Eleitoral", "actType": "LEI", "actNumber": "4737", "actYear": 1965, "fromPage": 461, "toPage": 496 },
+    { "position": 14, "section": "Código Florestal", "code": "BR/LEI/12651/2012", "title": "Código Florestal", "actType": "LEI", "actNumber": "12651", "actYear": 2012, "fromPage": 499, "toPage": 516 },
+    { "position": 15, "section": "Consolidação das Leis do Trabalho", "code": "BR/DEL/5452/1943", "title": "Consolidação das Leis do Trabalho", "actType": "DECRETO_LEI", "actNumber": "5452", "actYear": 1943, "fromPage": 521, "toPage": 604 },
+    { "position": 16, "section": "Estatutos", "code": "BR/LEI/10257/2001", "title": "Estatuto da Cidade", "actType": "LEI", "actNumber": "10257", "actYear": 2001, "fromPage": 606, "toPage": 613 },
+    { "position": 17, "section": "Estatutos", "code": "BR/LEI/8069/1990", "title": "Estatuto da Criança e do Adolescente", "actType": "LEI", "actNumber": "8069", "actYear": 1990, "fromPage": 614, "toPage": 647 },
+    { "position": 18, "section": "Estatutos", "code": "BR/LEI/12288/2010", "title": "Estatuto da Igualdade Racial", "actType": "LEI", "actNumber": "12288", "actYear": 2010, "fromPage": 648, "toPage": 653 },
+    { "position": 19, "section": "Estatutos", "code": "BR/LEI/12852/2013", "title": "Estatuto da Juventude", "actType": "LEI", "actNumber": "12852", "actYear": 2013, "fromPage": 654, "toPage": 659 },
+    { "position": 20, "section": "Estatutos", "code": "BR/LEI/13146/2015", "title": "Estatuto da Pessoa com Deficiência", "actType": "LEI", "actNumber": "13146", "actYear": 2015, "fromPage": 660, "toPage": 672 },
+    { "position": 21, "section": "Estatutos", "code": "BR/LEI/10741/2003", "title": "Estatuto da Pessoa Idosa", "actType": "LEI", "actNumber": "10741", "actYear": 2003, "fromPage": 673, "toPage": 682 },
+    { "position": 22, "section": "Normas Complementares", "code": "BR/LEI/11343/2006", "title": "Lei Antidrogas", "actType": "LEI", "actNumber": "11343", "actYear": 2006, "fromPage": 684, "toPage": 695 },
+    { "position": 23, "section": "Normas Complementares", "code": "BR/LEI/9394/1996", "title": "Lei de Diretrizes e Bases da Educação Nacional", "actType": "LEI", "actNumber": "9394", "actYear": 1996, "fromPage": 696, "toPage": 712 },
+    { "position": 24, "section": "Normas Complementares", "code": "BR/LEI/14133/2021", "title": "Lei de Licitações e Contratos Administrativos", "actType": "LEI", "actNumber": "14133", "actYear": 2021, "fromPage": 713, "toPage": 752 },
+    { "position": 25, "section": "Normas Complementares", "code": "BR/LCP/101/2000", "title": "Lei de Responsabilidade Fiscal", "actType": "LEI_COMPLEMENTAR", "actNumber": "101", "actYear": 2000, "fromPage": 753, "toPage": 766 },
+    { "position": 26, "section": "Normas Complementares", "code": "BR/LCP/150/2015", "title": "Lei do Emprego Doméstico", "actType": "LEI_COMPLEMENTAR", "actNumber": "150", "actYear": 2015, "fromPage": 767, "toPage": 771 },
+    { "position": 27, "section": "Normas Complementares", "code": "BR/LEI/8112/1990", "title": "Regime Jurídico dos Servidores Públicos Civis", "actType": "LEI", "actNumber": "8112", "actYear": 1990, "fromPage": 772, "toPage": 793 },
+    { "position": 28, "section": "Normas Complementares", "code": "BR/LEI/11340/2006", "title": "Lei Maria da Penha", "actType": "LEI", "actNumber": "11340", "actYear": 2006, "fromPage": 794, "toPage": 801 }
+  ]
+}
