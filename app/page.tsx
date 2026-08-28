@@ -75,7 +75,7 @@ const laws = [
 ];
 
 type ImportRequest = {
-  id: number;
+  id: number | string;
   reference: string;
   status: string;
   failed?: boolean;
@@ -123,13 +123,20 @@ export default function Home() {
         body: JSON.stringify({ reference, sourceUrl: sourceUrl || null }),
       });
       const result = await response.json();
+      let located = null;
+      if (response.ok) {
+        const locateResponse = await fetch("/api/import-requests/locate", { method: "POST" });
+        if (locateResponse.ok) located = await locateResponse.json();
+      }
       setRequests((current) =>
         current.map((request) =>
           request.id === id
             ? {
                 ...request,
                 status: response.ok
-                  ? `Referência validada: ${result.planaltoQuery}`
+                  ? located?.processed?.find((item: { id: string }) => item.id === result.id)?.candidates?.[0]
+                    ? `Fonte localizada: ${located.processed.find((item: { id: string }) => item.id === result.id).candidates[0]}`
+                    : `Referência validada: ${result.planaltoQuery}`
                   : result.error ?? "Não foi possível validar a solicitação",
                 failed: !response.ok,
               }
@@ -144,6 +151,41 @@ export default function Home() {
             : request,
         ),
       );
+    }
+  }
+
+  async function locatePendingRequests() {
+    setRequests((current) => [{ id: "queue", reference: "Fila pendente", status: "Localizando fontes oficiais" }, ...current.filter((item) => item.id !== "queue")]);
+    try {
+      const response = await fetch("/api/import-requests/locate", { method: "POST" });
+      const result = await response.json();
+      setRequests((current) => current.map((item) => item.id === "queue" ? {
+        ...item,
+        status: response.ok ? `${result.count} pedido(s) processado(s) para revisão.` : result.error ?? "Não foi possível processar a fila",
+        failed: !response.ok,
+      } : item));
+    } catch {
+      setRequests((current) => current.map((item) => item.id === "queue" ? { ...item, status: "Falha temporária ao processar a fila", failed: true } : item));
+    }
+  }
+
+  async function importForReview() {
+    setRequests((current) => [{ id: "import", reference: "Importação", status: "Baixando e organizando a fonte oficial" }, ...current.filter((item) => item.id !== "import")]);
+    try {
+      const response = await fetch("/api/import-requests/import", { method: "POST" });
+      const result = await response.json();
+      setRequests((current) => current.map((item) => item.id === "import" ? {
+        ...item,
+        reference: result.imported?.reference ?? "Importação",
+        status: response.ok
+          ? result.imported
+            ? `${result.imported.articles} artigo(s) organizados. Aguardando revisão.`
+            : "Nenhuma fonte localizada aguardando importação."
+          : result.error ?? "Não foi possível importar a fonte oficial",
+        failed: !response.ok,
+      } : item));
+    } catch {
+      setRequests((current) => current.map((item) => item.id === "import" ? { ...item, status: "Falha temporária durante a importação", failed: true } : item));
     }
   }
 
@@ -358,7 +400,15 @@ export default function Home() {
             </form>
 
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Fila desta sessão</h3>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Fila desta sessão</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={locatePendingRequests}>Processar pendentes</Button>
+                  <Button type="button" size="sm" onClick={importForReview} className="bg-emerald-900 hover:bg-emerald-800">
+                    <FilePlus2 />Importar para revisão
+                  </Button>
+                </div>
+              </div>
               {requests.length === 0 ? (
                 <div className="mt-3 rounded-xl border border-dashed border-stone-300 p-6 text-center text-sm text-stone-500">Nenhuma solicitação registrada.</div>
               ) : (
