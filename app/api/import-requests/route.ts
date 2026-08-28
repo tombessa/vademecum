@@ -51,15 +51,8 @@ export async function POST(request: Request) {
       await client.query("BEGIN");
       try {
         const userResult = await client.query<{ id: string; role: string }>(
-          `INSERT INTO app_user (
-             email, display_name, auth_provider, external_subject, status
-           ) VALUES ($1, $2, 'CHATGPT', $1, 'ACTIVE')
-           ON CONFLICT (email) DO UPDATE
-             SET display_name = EXCLUDED.display_name,
-                 auth_provider = 'CHATGPT',
-                 external_subject = EXCLUDED.external_subject,
-                 status = 'ACTIVE'
-           RETURNING id, role::text`,
+          `SELECT user_id AS id, user_role AS role
+           FROM ensure_chatgpt_user($1::citext, $2)`,
           [authenticatedUser.email, authenticatedUser.displayName],
         );
         const user = userResult.rows[0];
@@ -106,9 +99,16 @@ export async function POST(request: Request) {
       },
       { status: 202 },
     );
-  } catch {
+  } catch (error) {
+    const databaseCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? String(error.code)
+        : null;
+    const message = databaseCode === "42883"
+      ? "Atualização do banco pendente. Execute npm run db:migrate."
+      : "Banco de dados indisponível. Tente novamente em instantes.";
     return Response.json(
-      { error: "Banco de dados indisponível. Tente novamente em instantes." },
+      { error: message, code: databaseCode ? `DB_${databaseCode}` : null },
       { status: 503 },
     );
   }
