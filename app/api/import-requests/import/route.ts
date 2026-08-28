@@ -49,7 +49,10 @@ export async function POST() {
       await client.query("BEGIN");
       try {
         phase = "identificação do usuário";
-        const u = await client.query<{id:string;role:string}>("SELECT user_id id, user_role role FROM ensure_chatgpt_user($1::citext,$2)",[auth.email,auth.displayName]);
+        const u = await client.query<{id:string;role:string}>(
+          "SELECT user_id AS id, user_role AS role FROM ensure_chatgpt_user($1::citext, $2)",
+          [auth.email,auth.displayName],
+        );
         const user=u.rows[0]; if(!user) throw new Error("Usuário ausente");
         await client.query("SELECT set_config('app.current_user_id',$1,true),set_config('app.current_user_role',$2,true)",[user.id,user.role]);
         phase = "leitura da fila";
