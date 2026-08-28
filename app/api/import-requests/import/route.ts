@@ -4,6 +4,7 @@ import { getChatGPTUser } from "@/app/chatgpt-auth";
 import { withDatabaseClient } from "@/lib/postgres";
 
 const ARTICLE_PATTERN = /(Art\.\s*\d+[ºo]?(?:-[A-Z])?)\s*([\s\S]*?)(?=Art\.\s*\d+[ºo]?(?:-[A-Z])?|$)/giu;
+const WINDOWS_1252_SPECIAL = "€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008dŽ\u008f\u0090‘’“”•–—˜™š›œ\u009džŸ";
 
 function decodeHtmlText(html: string) {
   return html
@@ -22,37 +23,48 @@ function decodeHtmlText(html: string) {
     .trim();
 }
 
+function decodeWindows1252(bytes: ArrayBuffer) {
+  return Array.from(new Uint8Array(bytes), (byte) => {
+    if (byte < 0x80 || byte >= 0xa0) return String.fromCharCode(byte);
+    return WINDOWS_1252_SPECIAL[byte - 0x80] ?? "�";
+  }).join("");
+}
+
 function decodeResponse(bytes: ArrayBuffer, contentType: string) {
   const headerCharset = contentType.match(/charset=([^;\s]+)/iu)?.[1]?.replace(/["']/gu, "");
-  const headerText = new TextDecoder("windows-1252").decode(bytes.slice(0, 4096));
+  const headerText = Array.from(new Uint8Array(bytes.slice(0, 4096)), (byte) => String.fromCharCode(byte)).join("");
   const documentCharset = headerText.match(/charset\s*=\s*["']?([^\s"'/>;]+)/iu)?.[1];
-  const charset = headerCharset || documentCharset;
-  try {
-    return new TextDecoder(charset || "utf-8").decode(bytes);
-  } catch {
-    return new TextDecoder("utf-8").decode(bytes);
-  }
+  const charset = (headerCharset || documentCharset || "utf-8").toLocaleLowerCase("en-US");
+  return /^(?:windows-1252|iso-8859-1|latin1)$/u.test(charset)
+    ? decodeWindows1252(bytes)
+    : new TextDecoder().decode(bytes);
 }
 
 export async function POST() {
   const auth = await getChatGPTUser();
   if (!auth) return Response.json({ error: "Autenticação necessária." }, { status: 401 });
+  let phase = "conexão com o banco";
   try {
     const result = await withDatabaseClient(async (client) => {
       await client.query("BEGIN");
       try {
+        phase = "identificação do usuário";
         const u = await client.query<{id:string;role:string}>("SELECT user_id id, user_role role FROM ensure_chatgpt_user($1::citext,$2)",[auth.email,auth.displayName]);
         const user=u.rows[0]; if(!user) throw new Error("Usuário ausente");
         await client.query("SELECT set_config('app.current_user_id',$1,true),set_config('app.current_user_role',$2,true)",[user.id,user.role]);
+        phase = "leitura da fila";
         const q=await client.query<{id:string;act_type:string;act_number:string;act_year:number;raw_query:string;source_url:string}>(`SELECT r.id,r.requested_act_type act_type,r.requested_act_number act_number,r.requested_act_year act_year,r.raw_query,c.source_url
           FROM legislation_import_request r JOIN legislation_import_candidate c ON c.request_id=r.id AND c.is_selected
           WHERE r.requested_by=$1 AND r.status='FOUND' ORDER BY r.created_at LIMIT 1 FOR UPDATE`,[user.id]);
         const request=q.rows[0]; if(!request){await client.query("COMMIT");return null;}
-        const response=await fetch(request.source_url,{headers:{"user-agent":"VadeMecumPessoal/0.1"},signal:AbortSignal.timeout(15000)});
+        phase = "download do Planalto";
+        const response=await fetch(request.source_url,{headers:{"user-agent":"Mozilla/5.0 (compatible; VadeMecumPessoal/0.1; +https://chatgpt.com)","accept":"text/html,application/xhtml+xml"},signal:AbortSignal.timeout(15000)});
         if(!response.ok) throw new Error("Fonte oficial indisponível");
+        phase = "leitura do texto oficial";
         const contentType=response.headers.get("content-type")??"text/html";
         const bytes=await response.arrayBuffer();
         const html=decodeResponse(bytes,contentType); const text=decodeHtmlText(html); const sha=createHash("sha256").update(new Uint8Array(bytes)).digest("hex");
+        phase = "gravação da norma";
         const snapshot=await client.query<{id:string}>(`INSERT INTO source_snapshot(source_type,source_url,content_type,sha256) VALUES('PLANALTO_HTML',$1,$2,$3) ON CONFLICT(source_type,sha256) DO UPDATE SET source_url=EXCLUDED.source_url RETURNING id`,[request.source_url,contentType,sha]);
         const act=await client.query<{id:string}>(`INSERT INTO normative_act(act_type,act_number,act_year,title,official_url,status) VALUES($1,$2,$3,$4,$5,'ACTIVE') ON CONFLICT(jurisdiction,act_type,act_number,act_year) DO UPDATE SET title=EXCLUDED.title,official_url=EXCLUDED.official_url RETURNING id`,[request.act_type,request.act_number,request.act_year,request.raw_query,request.source_url]);
         const version=await client.query<{id:string}>(`INSERT INTO act_version(act_id,source_snapshot_id,version_label,content_sha256,is_current) VALUES($1,$2,'Fonte oficial importada',$3,true) ON CONFLICT(act_id,content_sha256) DO UPDATE SET is_current=true RETURNING id`,[act.rows[0].id,snapshot.rows[0].id,sha]);
@@ -64,5 +76,9 @@ export async function POST() {
       }catch(e){await client.query("ROLLBACK");throw e;}
     });
     return Response.json({imported:result});
-  } catch { return Response.json({error:"Não foi possível importar a fonte oficial agora."},{status:503}); }
+  } catch (error) {
+    const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : null;
+    console.error("Falha na importação legal", { phase, code, message: error instanceof Error ? error.message : "erro desconhecido" });
+    return Response.json({error:`Não foi possível concluir a etapa: ${phase}.`,code:code ? `DB_${code}` : "IMPORT_FAILED"},{status:503});
+  }
 }
