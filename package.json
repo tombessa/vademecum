@@ -13,8 +13,8 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:unit": "node --test tests/*.test.mjs",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:check": "node scripts/check-postgres.mjs",
-    "db:migrate": "node scripts/migrate-postgres.mjs"
+    "db:check": "node --env-file=.env scripts/check-postgres.mjs",
+    "db:migrate": "node --env-file=.env scripts/migrate-postgres.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
